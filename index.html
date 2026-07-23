@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Trips Local | Non-Deterministic 3D LLM Adventure</title>
+  <meta name="description" content="An interactive non-deterministic text adventure and educational RPG powered by local Ollama LLMs with 3D Three.js visualizer.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Import Map for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body class="theme-cyberpunk">
+  <!-- 3D Canvas Background & Interactive Selector -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Ambient Overlay Effects -->
+  <div class="vignette-overlay"></div>
+  <div class="scanline-overlay"></div>
+
+  <!-- Main App Wrapper -->
+  <div id="app-wrapper">
+
+    <!-- TOP HEADER / NAV BAR -->
+    <header class="top-nav glass-card">
+      <div class="brand">
+        <span class="brand-icon">🌌</span>
+        <h1 class="brand-title">TEXT TRIPS <span class="badge-local">LOCAL</span></h1>
+      </div>
+
+      <div class="nav-controls">
+        <!-- Mode Badge -->
+        <div id="mode-badge" class="pill-badge mode-adventure">
+          <span class="badge-dot"></span>
+          <span id="mode-text">ADVENTURE MODE</span>
+        </div>
+
+        <!-- Ollama Connection Status Widget -->
+        <div id="ollama-status-widget" class="status-widget status-checking" title="Click to configure Ollama">
+          <span class="status-indicator"></span>
+          <span id="ollama-status-label">Checking Ollama...</span>
+          <select id="ollama-model-select" class="custom-select" title="Select Ollama Model">
+            <option value="auto">Auto-detecting...</option>
+          </select>
+        </div>
+
+        <!-- Audio Toggle -->
+        <button id="btn-audio-toggle" class="icon-btn" title="Toggle Sound & Ambience">
+          <span id="audio-icon">🔊</span>
+        </button>
+
+        <!-- Journey Log Toggle -->
+        <button id="btn-log-toggle" class="icon-btn" title="View Journey Timeline">
+          <span>📜 Log</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- SCREEN 1: 3D SELECTION MATRIX (Setup Screen) -->
+    <main id="screen-selector" class="screen active">
+      <div class="selector-overlay-content">
+        <div class="hero-header">
+          <h2 class="hero-title">CHOOSE YOUR NEXT TRIP</h2>
+          <p class="hero-subtitle">Interact with the 3D celestial nodes or select your storyline, era, and protagonist below.</p>
+        </div>
+
+        <!-- Selector Tabs / Cards Container -->
+        <div class="matrix-grid">
+          
+          <!-- Column 1: Scenarios & Plots -->
+          <div class="matrix-card glass-panel">
+            <div class="card-header">
+              <span class="card-step">01</span>
+              <h3>Starting Plot</h3>
+            </div>
+            <div id="plot-list" class="selectable-list">
+              <!-- Dynamically Populated -->
+            </div>
+            <div class="custom-plot-box">
+              <input type="text" id="custom-plot-input" placeholder="Or type a custom scenario pitch..." maxlength="120">
+            </div>
+          </div>
+
+          <!-- Column 2: Timelines & Eras -->
+          <div class="matrix-card glass-panel">
+            <div class="card-header">
+              <span class="card-step">02</span>
+              <h3>Timeline & Setting</h3>
+            </div>
+            <div id="timeline-list" class="selectable-list">
+              <!-- Dynamically Populated -->
+            </div>
+          </div>
+
+          <!-- Column 3: Protagonist & Mode -->
+          <div class="matrix-card glass-panel">
+            <div class="card-header">
+              <span class="card-step">03</span>
+              <h3>Protagonist & Mode</h3>
+            </div>
+            
+            <div class="sub-section">
+              <label class="section-label">SELECT CHARACTER</label>
+              <div id="character-list" class="selectable-list compact">
+                <!-- Dynamically Populated -->
+              </div>
+            </div>
+
+            <div class="sub-section">
+              <label class="section-label">EXPERIENCE MODE</label>
+              <div class="mode-toggle-group">
+                <button class="mode-btn active" data-mode="adventure">
+                  <span class="mode-icon">⚔️</span>
+                  <div class="mode-info">
+                    <strong>Story Adventure</strong>
+                    <small>Dynamic non-deterministic plot narrative</small>
+                  </div>
+                </button>
+                <button class="mode-btn" data-mode="educational">
+                  <span class="mode-icon">🎓</span>
+                  <div class="mode-info">
+                    <strong>Educational Quest</strong>
+                    <small>Subject mastery shapes your game state</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Start Trip Action Bar -->
+        <div class="action-bar-center">
+          <button id="btn-start-trip" class="btn-primary glow-pulse">
+            <span class="btn-glow"></span>
+            <span class="btn-text">EMBARK ON TRIP 🚀</span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 2: GAMEPLAY ADVENTURE SCREEN -->
+    <main id="screen-gameplay" class="screen hidden">
+      
+      <!-- TOP HUD: CHARACTER STATE & WARNING METERS -->
+      <div class="hud-top-bar glass-card">
+        <!-- Protagonist Info -->
+        <div class="hud-character">
+          <div class="char-avatar" id="hud-char-avatar">🧙‍♂️</div>
+          <div class="char-meta">
+            <div class="char-name" id="hud-char-name">Character Name</div>
+            <div class="char-role" id="hud-char-role">Role</div>
+          </div>
+        </div>
+
+        <!-- State Tier / Karma Indicator -->
+        <div class="hud-state-tier">
+          <span class="state-label">STATE:</span>
+          <div id="state-tier-badge" class="state-badge tier-optimal">
+            <span class="tier-icon">⚡</span>
+            <span id="tier-name">OPTIMAL</span>
+          </div>
+          <div class="state-bar-wrapper">
+            <div id="state-bar-fill" class="state-bar-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Warning Counter Gauge (Max 3) -->
+        <div class="hud-warning-gauge">
+          <span class="gauge-label">LOGIC WARNS:</span>
+          <div class="warning-dots">
+            <span class="warn-dot" id="warn-1"></span>
+            <span class="warn-dot" id="warn-2"></span>
+            <span class="warn-dot" id="warn-3"></span>
+          </div>
+          <span id="warn-count-text" class="warn-text">0 / 3</span>
+        </div>
+
+        <!-- Turn Count -->
+        <div class="hud-turn-counter">
+          <span class="turn-label">TRIP TURN</span>
+          <span id="turn-number" class="turn-val">#1</span>
+        </div>
+      </div>
+
+      <!-- MAIN NARRATIVE DISPLAY AREA -->
+      <div class="narrative-container">
+        
+        <!-- Story Text Terminal -->
+        <div id="story-terminal" class="glass-panel story-terminal-panel">
+          <div class="terminal-header">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span id="story-location-title" class="terminal-title">LOCATION: UNKNOWN</span>
+            <span id="llm-indicator" class="llm-pulse">OLLAMA THINKING...</span>
+          </div>
+          
+          <div class="terminal-body" id="terminal-body">
+            <!-- Dynamic Story Narrative Text Rendered Here -->
+            <div id="story-text" class="typewriter-text">
+              Initializing neural story vectors...
+            </div>
+            
+            <!-- Open-Ended Prompt Question -->
+            <div id="prompt-question-box" class="question-callout hidden">
+              <span class="question-icon">❓</span>
+              <p id="question-text">What will you do next?</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- REACTION & FEEDBACK BANNER (Warnings / Absurd Integration Alert) -->
+        <div id="feedback-banner" class="feedback-banner hidden">
+          <div id="feedback-icon" class="fb-icon">⚠️</div>
+          <div class="fb-content">
+            <strong id="feedback-title">LOGIC WARNING</strong>
+            <p id="feedback-message">Details regarding the user's action outcome...</p>
+          </div>
+        </div>
+
+        <!-- TIMER & RESPONSE INPUT PANEL -->
+        <div class="input-panel glass-card">
+          
+          <!-- Timer Gauge Bar -->
+          <div class="timer-wrapper">
+            <div class="timer-header">
+              <span class="timer-label">⏰ DECISION TIMER</span>
+              <span id="timer-seconds" class="timer-count">30s</span>
+            </div>
+            <div class="timer-bar-track">
+              <div id="timer-bar-fill" class="timer-bar-fill"></div>
+            </div>
+          </div>
+
+          <!-- Single-Sentence Input Form -->
+          <form id="response-form" class="response-form">
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="user-response-input" 
+                placeholder="Type your decision in a single sentence..." 
+                autocomplete="off"
+                maxlength="280" 
+                disabled
+              />
+              <button type="submit" id="btn-submit-action" class="btn-submit" disabled>
+                <span>ACT</span>
+                <span class="shortcut-hint">↵</span>
+              </button>
+            </div>
+            <div class="input-meta">
+              <span class="single-sentence-note">💡 Rule: Provide a clear single-sentence action. Absurd answers will be re-routed!</span>
+              <span id="char-counter" class="char-counter">0 / 280</span>
+            </div>
+          </form>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- SCREEN 3: GAME OVER & TRIP SUMMARY MODAL -->
+    <div id="modal-gameover" class="modal-overlay hidden">
+      <div class="modal-card glass-panel gameover-card">
+        <div class="gameover-header">
+          <span class="gameover-icon" id="go-icon">💀</span>
+          <h2 id="go-title">TRIP TERMINATED</h2>
+          <p id="go-subtitle">Your decisions have reshaped the timeline.</p>
+        </div>
+
+        <div class="gameover-body">
+          <div class="reason-box">
+            <span class="reason-label">FAILURE REASON:</span>
+            <p id="go-reason-text">Time ran out before a critical decision could be made.</p>
+          </div>
+
+          <div class="trip-stats-grid">
+            <div class="stat-box">
+              <span class="stat-val" id="go-stat-turns">0</span>
+              <span class="stat-lbl">Turns Survived</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val" id="go-stat-warns">0/3</span>
+              <span class="stat-lbl">Warnings Issued</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-val" id="go-stat-tier">OPTIMAL</span>
+              <span class="stat-lbl">Final State</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-restart-trip" class="btn-primary">
+            <span>TRY AGAIN</span>
+          </button>
+          <button id="btn-export-log-modal" class="btn-secondary">
+            <span>EXPORT TRIP LOG</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNEY LOG SIDEBAR MODAL -->
+    <div id="drawer-log" class="drawer-overlay hidden">
+      <div class="drawer-content glass-panel">
+        <div class="drawer-header">
+          <h3>📜 TRIP TIMELINE LOG</h3>
+          <button id="btn-close-log" class="icon-btn">✖</button>
+        </div>
+        <div class="drawer-body" id="log-timeline-list">
+          <div class="empty-log-msg">No story history recorded yet. Embark on a trip to create your timeline!</div>
+        </div>
+        <div class="drawer-footer">
+          <button id="btn-export-json" class="btn-secondary">Download JSON</button>
+          <button id="btn-export-markdown" class="btn-secondary">Download Markdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OLLAMA SETTINGS MODAL -->
+    <div id="modal-ollama-config" class="modal-overlay hidden">
+      <div class="modal-card glass-panel">
+        <div class="modal-header">
+          <h3>⚙️ Ollama Connection Settings</h3>
+          <button id="btn-close-ollama-modal" class="icon-btn">✖</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="ollama-url-input">Ollama Server Endpoint URL</label>
+            <input type="text" id="ollama-url-input" value="http://localhost:11434" class="custom-input">
+            <small>Default is <code>http://localhost:11434</code>. Make sure Ollama is running!</small>
+          </div>
+
+          <div class="form-group">
+            <label for="ollama-temp-input">Creativity (Temperature)</label>
+            <input type="range" id="ollama-temp-input" min="0.1" max="1.5" step="0.1" value="0.7">
+            <span id="temp-val-display">0.7</span>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-fallback-mode" checked>
+              <span>Enable Automatic Procedural Fallback (plays even if Ollama is offline)</span>
+            </label>
+          </div>
+
+          <div id="ollama-test-status" class="test-status-box">
+            Testing connection...
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-test-ollama" class="btn-secondary">Test Connection</button>
+          <button id="btn-save-ollama" class="btn-primary">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Entry Module -->
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
