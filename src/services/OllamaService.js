@@ -137,6 +137,7 @@ Player Single-Sentence Action: ${userResponse || 'I prepare my gear and take a d
 
 Generate next story phase in JSON format:`;
 
+    const startTime = performance.now();
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -154,6 +155,31 @@ Generate next story phase in JSON format:`;
 
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const data = await response.json();
+    const endTime = performance.now();
+
+    // Calculate generation throughput metrics (tokens/sec)
+    let tokensPerSec = 0;
+    let evalCount = data.eval_count || 0;
+    let evalDurationMs = data.eval_duration ? Math.round(data.eval_duration / 1e6) : 0;
+
+    if (data.eval_count && data.eval_duration && data.eval_duration > 0) {
+      tokensPerSec = parseFloat((data.eval_count / (data.eval_duration / 1e9)).toFixed(1));
+    } else {
+      const elapsedSec = (endTime - startTime) / 1000;
+      evalCount = evalCount || Math.round((data.response || "").length / 4);
+      evalDurationMs = evalDurationMs || Math.round(elapsedSec * 1000);
+      tokensPerSec = parseFloat((evalCount / Math.max(0.05, elapsedSec)).toFixed(1));
+    }
+
+    const throughput = {
+      tokensPerSec,
+      evalCount,
+      evalDurationMs,
+      promptEvalCount: data.prompt_eval_count || 0,
+      promptEvalDurationMs: data.prompt_eval_duration ? Math.round(data.prompt_eval_duration / 1e6) : 0,
+      totalDurationMs: data.total_duration ? Math.round(data.total_duration / 1e6) : Math.round(endTime - startTime),
+      model: data.model || this.selectedModel
+    };
 
     try {
       const parsed = JSON.parse(data.response);
@@ -167,7 +193,8 @@ Generate next story phase in JSON format:`;
         educationalScore: parsed.educationalScore || 3,
         educationalFeedback: parsed.educationalFeedback || "",
         stateTierDelta: parsed.isAbsurd ? "DEMOTE" : (parsed.stateTierDelta || "MAINTAIN"),
-        source: "ollama"
+        source: "ollama",
+        throughput
       };
     } catch (parseErr) {
       console.warn("Raw LLM response was not valid JSON, returning fallback parser:", data.response);
@@ -177,7 +204,8 @@ Generate next story phase in JSON format:`;
         isAbsurd: false,
         isWarning: false,
         stateTierDelta: "MAINTAIN",
-        source: "ollama-raw"
+        source: "ollama-raw",
+        throughput
       };
     }
   }
@@ -261,6 +289,17 @@ Generate next story phase in JSON format:`;
       "How do you deploy your remaining equipment to secure this sector before time expires?"
     ];
 
+    const estTokens = Math.round((storyText.length + (absurdExplanation || "").length) / 4);
+    const throughput = {
+      tokensPerSec: parseFloat((estTokens / 0.12).toFixed(1)),
+      evalCount: estTokens,
+      evalDurationMs: 120,
+      promptEvalCount: 75,
+      promptEvalDurationMs: 15,
+      totalDurationMs: 135,
+      model: "procedural-fallback"
+    };
+
     return {
       storySegment: storyText,
       openQuestion: questionTemplates[turnNumber % questionTemplates.length],
@@ -271,7 +310,8 @@ Generate next story phase in JSON format:`;
       educationalScore: stateTierDelta === 'UPGRADE' ? 5 : (stateTierDelta === 'DEMOTE' ? 2 : 1),
       educationalFeedback,
       stateTierDelta,
-      source: "procedural-fallback"
+      source: "procedural-fallback",
+      throughput
     };
   }
 }

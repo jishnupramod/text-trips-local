@@ -150,7 +150,8 @@ export class StoryEngine {
       isWarning: llmResult.isWarning,
       warningReason: llmResult.warningReason,
       tier: this.getCurrentTier(),
-      educationalFeedback: llmResult.educationalFeedback
+      educationalFeedback: llmResult.educationalFeedback,
+      throughput: llmResult.throughput
     });
 
     return {
@@ -165,7 +166,8 @@ export class StoryEngine {
       absurdExplanation: llmResult.absurdExplanation,
       isWarning: llmResult.isWarning,
       warningReason: llmResult.warningReason,
-      educationalFeedback: llmResult.educationalFeedback
+      educationalFeedback: llmResult.educationalFeedback,
+      throughput: llmResult.throughput
     };
   }
 
@@ -213,6 +215,7 @@ export class StoryEngine {
       if (item.userResponse) md += `> **Action:** *"${item.userResponse}"*\n\n`;
       md += `${item.storySegment}\n\n`;
       if (item.question) md += `**Question:** ${item.question}\n\n`;
+      if (item.throughput) md += `*⚡ LLM Throughput:* ${item.throughput.tokensPerSec} tok/s (${item.throughput.evalCount} tokens in ${item.throughput.evalDurationMs}ms | Model: ${item.throughput.model})\n\n`;
       if (item.isAbsurd) md += `*🌀 Absurd Answer Re-routed:* ${item.absurdExplanation}\n\n`;
       if (item.isWarning) md += `*⚠️ Logic Warning:* ${item.warningReason}\n\n`;
       md += `---\n\n`;

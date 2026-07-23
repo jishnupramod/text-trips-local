@@ -218,6 +218,71 @@ html, body {
   border-color: rgba(245, 158, 11, 0.4);
 }
 
+/* Throughput Widget (Top Nav) */
+.throughput-widget {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 14px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+  transition: var(--transition-fast);
+}
+
+.throughput-widget:hover {
+  background: rgba(0, 240, 255, 0.18);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
+}
+
+.tps-bolt {
+  color: #fbbf24;
+  font-size: 0.95rem;
+  filter: drop-shadow(0 0 6px #fbbf24);
+  animation: bolt-pulse 1.8s infinite alternate;
+}
+
+@keyframes bolt-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 10px #fbbf24); }
+}
+
+.tps-val {
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+/* Terminal Throughput Badge */
+.terminal-tps-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 3px 10px;
+  border-radius: 8px;
+  color: var(--text-main);
+  margin-left: 12px;
+}
+
+.tps-highlight {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.tps-meta {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  margin-left: 4px;
+}
+
 .badge-dot {
   width: 8px;
   height: 8px;

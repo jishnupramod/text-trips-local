@@ -476,9 +476,16 @@ class App {
     this.storyEngine.stopTurnTimer();
     this.playSound('click');
 
-    // Show LLM Thinking Indicator
+    // Show LLM Thinking Indicator & set evaluating state
     const llmIndicator = document.getElementById('llm-indicator');
     llmIndicator.classList.add('active');
+
+    const tpsNavVal = document.getElementById('tps-value');
+    const termTpsBadge = document.getElementById('terminal-tps-badge');
+    const termTpsVal = document.getElementById('terminal-tps-val');
+    const termTpsMeta = document.getElementById('terminal-tps-meta');
+
+    tpsNavVal.textContent = "generating...";
 
     // Fetch Story Expansion from Ollama Service
     const llmResult = await this.ollamaService.generateStoryStep({
@@ -495,6 +502,15 @@ class App {
     });
 
     llmIndicator.classList.remove('active');
+
+    // Update Throughput Widgets
+    if (llmResult.throughput) {
+      const tp = llmResult.throughput;
+      tpsNavVal.textContent = `${tp.tokensPerSec} tok/s`;
+      termTpsVal.textContent = tp.tokensPerSec;
+      termTpsMeta.textContent = `(${tp.evalCount} tok in ${tp.evalDurationMs}ms)`;
+      termTpsBadge.classList.remove('hidden');
+    }
 
     // Process State Update via StoryEngine
     const turnResult = this.storyEngine.processTurnResult(llmResult, userActionText);
@@ -634,6 +650,7 @@ class App {
           <div class="log-turn">Turn #${item.turn} <small style="color:#64748b">(${item.timestamp})</small></div>
           ${item.userResponse ? `<div class="log-action">Action: "${item.userResponse}"</div>` : ''}
           <div class="log-segment">${item.storySegment}</div>
+          ${item.throughput ? `<div style="color:#00f0ff;font-family:var(--font-mono);font-size:0.75rem">⚡ Speed: ${item.throughput.tokensPerSec} tok/s (${item.throughput.evalCount} tok in ${item.throughput.evalDurationMs}ms)</div>` : ''}
           ${item.isAbsurd ? `<div style="color:#c084fc;font-size:0.75rem">🌀 Absurdity Re-routed: ${item.absurdExplanation}</div>` : ''}
           ${item.isWarning ? `<div style="color:#ef4444;font-size:0.75rem">⚠️ Logic Warning: ${item.warningReason}</div>` : ''}
         </div>

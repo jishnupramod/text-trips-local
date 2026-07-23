@@ -49,6 +49,12 @@
           <span id="mode-text">ADVENTURE MODE</span>
         </div>
 
+        <!-- LLM Throughput Widget -->
+        <div id="nav-throughput-widget" class="throughput-widget" title="Latest LLM Generation Speed (tokens/sec)">
+          <span class="tps-bolt">⚡</span>
+          <span id="tps-value" class="tps-val">-- tok/s</span>
+        </div>
+
         <!-- Ollama Connection Status Widget -->
         <div id="ollama-status-widget" class="status-widget status-checking" title="Click to configure Ollama">
           <span class="status-indicator"></span>
@@ -207,6 +213,11 @@
             <span class="terminal-dot yellow"></span>
             <span class="terminal-dot green"></span>
             <span id="story-location-title" class="terminal-title">LOCATION: UNKNOWN</span>
+            <div id="terminal-tps-badge" class="terminal-tps-badge hidden" title="Detailed throughput metrics">
+              <span class="tps-bolt">⚡</span>
+              <span id="terminal-tps-val" class="tps-highlight">0.0</span> tok/s
+              <span id="terminal-tps-meta" class="tps-meta"></span>
+            </div>
             <span id="llm-indicator" class="llm-pulse">OLLAMA THINKING...</span>
           </div>
           

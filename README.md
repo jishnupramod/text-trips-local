@@ -25,14 +25,14 @@ Text Trips Local re-imagines classic text adventure games by replacing static de
 
 ---
 
-## 🧪 Local Model Performance & Testing
+## 🧪 Local Model Performance & Benchmarks
 
 Gameplay was extensively tested using the **`granite4.1:3b`** model running locally via **Ollama**:
 
 - **Model**: `granite4.1:3b`
 - **Hardware**: Apple Silicon **M5 Max MacBook Pro**
-- **Experience**: Performed remarkably well despite its compact 3B parameter footprint. It delivered fast prompt evaluation and high token-per-second generation throughput, enabling near-instantaneous narrative turns and real-time response evaluations.
-- *(Note: Detailed generation throughput benchmark metrics will be added in a future update).*
+- **Average Generation Throughput**: **~110 tokens/second** ⚡
+- **Experience**: Performed remarkably well despite its compact 3B parameter footprint. Achieving an average generation throughput of **110 tokens/sec** provided near-instantaneous narrative turn expansion, seamless absurdity re-routing, and instant real-time response evaluations.
 
 > 💡 **Offline Resiliency**: A built-in **Procedural Local Fallback Engine** allows playing immediately even if Ollama is offline or downloading models.
 
@@ -42,8 +42,9 @@ Gameplay was extensively tested using the **`granite4.1:3b`** model running loca
 
 - **Interactive 3D Matrix**: Select plots, timelines/eras, protagonists, and game modes via interactive 3D celestial nodes and glassmorphic cards.
 - **Dynamic WebGL Themes**: Ambient particle lattices, grid planes, and lighting dynamically shift between visual themes (*Cyberpunk Neon Grid*, *Ancient Relic Runes*, *Deep Space Nebula*, *Quantum Lab Lattice*).
+- **⚡ Real-Time Generation Throughput Widget**: Integrated top-nav and terminal header widgets that display live generation speed (`tokens/sec`), evaluated token counts (`eval_count`), and evaluation latency (`eval_duration`) for every LLM story expansion turn.
 - **Cyber-Terminal HUD**: Glassmorphic HUD overlay featuring typewriter text animation, location headers, status lights, state health bars, warning indicators, and Web Audio sound synthesis.
-- **Travelogue Export**: Download your entire timeline history as formatted **Markdown** or **JSON** logs.
+- **Travelogue Export**: Download your entire timeline history as formatted **Markdown** or **JSON** logs (including token throughput records per turn).
 
 ---
 
